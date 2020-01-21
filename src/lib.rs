@@ -6,7 +6,7 @@
 //! * CPK Color
 //! * Electron configuration
 //! * Electronegativity
-//! * AtomicRadius
+//! * Atomic radius
 //! * Ionization energy
 //! * Electron affinity
 //! * Oxidation states
@@ -177,7 +177,6 @@ impl Element {
     }
 }
 
-#[derive(Debug)]
 pub struct PeriodicTableIterator {
     r: i8,
     l: i8,
