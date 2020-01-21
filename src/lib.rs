@@ -18,6 +18,7 @@
 //! * Year discovered
 
 use std::mem;
+use std::iter::{Iterator, FusedIterator, ExactSizeIterator, DoubleEndedIterator};
 
 include!(concat!(env!("OUT_DIR"), "/data.rs"));
 
@@ -37,6 +38,7 @@ pub enum GroupBlock {
 
 macro_rules! lookup {
     ($table:expr, $term:expr) => {{
+        // Binary search the term
         let mut l = 0;
         let mut r = 117;
         while l <= r {
@@ -57,10 +59,6 @@ macro_rules! lookup {
 
 impl Element {
     pub fn get_oxidation_states(&self) -> &'static [i8] {
-        if *self as u8 == 117 {
-            // Last element of the list
-            return &OXIDATION_STATES_DATA[OXIDATION_STATES[*self as usize].0 as usize..][..];
-        }
         &OXIDATION_STATES_DATA[OXIDATION_STATES[*self as usize].0 as usize..
             OXIDATION_STATES[*self as usize].0 as usize+OXIDATION_STATES[*self as usize].1 as usize][..]
     }
@@ -79,6 +77,10 @@ impl Element {
     /// Name must be lowercase
     pub fn from_name(name: &str) -> Option<Element> {
         lookup!(LOWERCASE_NAMES_SORTED_ALPHABETICALLY, name)
+    }
+
+    pub fn from_name_case_insensitive(name: &str) -> Option<Element> {
+        Element::from_name(&name.to_lowercase())
     }
 
     pub fn from_atomic_number(z: usize) -> Option<Element> {
@@ -174,9 +176,63 @@ impl Element {
         *self as u8
     }
 }
+
+#[derive(Debug)]
+pub struct PeriodicTableIterator {
+    r: i8,
+    l: i8,
+}
+
+pub fn periodic_table() -> PeriodicTableIterator {
+    PeriodicTableIterator { l: -1, r: 118 }
+}
+
+impl Iterator for PeriodicTableIterator {
+    type Item = Element;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.l += 1;
+        if self.l >= self.r {
+            return None;
+        }
+        let e = unsafe { Element::from_id(self.l as u8) };
+        Some(e)
+    }
+}
+
+impl DoubleEndedIterator for PeriodicTableIterator {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.r -= 1;
+        if self.r <= self.l {
+            return None;
+        }
+        let e = unsafe { Element::from_id(self.r as u8) };
+        Some(e)
+    }
+}
+
+impl FusedIterator for PeriodicTableIterator {}
+
+impl ExactSizeIterator for PeriodicTableIterator {
+    fn len(&self) -> usize {
+        (self.r - self.l) as usize
+    }
+}
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub enum StateOfMatter {
     Solid,
     Liquid,
     Gas
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn smiles_parse() {
+        let mut r = crate::periodic_table();
+        r.next_back();
+        println!("{:?}", r.next());
+        assert_eq!(2 + 2, 4);
+    }
 }

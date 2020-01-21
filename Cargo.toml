@@ -1,6 +1,6 @@
 [package]
 name = "ptable"
-version = "0.1.2"
+version = "0.2.0"
 authors = ["sandmor"]
 edition = "2018"
 build = "build.rs"
@@ -11,6 +11,7 @@ license = "MIT"
 readme = "README.md"
 documentation = "https://docs.rs/ptable/"
 homepage = "https://crates.io/crates/ptable"
+repository = "https://github.com/sandmor/ptable"
 
 [dependencies]
 [build-dependencies]

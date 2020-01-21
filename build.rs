@@ -214,7 +214,7 @@ fn main() {
     }
     data.sort_unstable_by_key(|r| r.atomic_number);
     let mut out_file = File::create(out_file).unwrap();
-    out_file.write(b"#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]\npub enum Element {\n").unwrap();
+    out_file.write(b"#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]\n#[non_exhaustive]\npub enum Element {\n").unwrap();
     for record in data.iter() {
         out_file.write(format!("    {},\n", record.name).as_bytes()).unwrap();
     }
