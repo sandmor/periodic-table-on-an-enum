@@ -8,6 +8,9 @@ description = "Complete periodic table, with melting point, density, atomic mass
 categories = ["science"]
 keywords = ["periodic-table", "chemistry", "chemical"]
 license = "MIT"
+readme = "README.md"
+documentation = "https://docs.rs/ptable/"
+homepage = "https://crates.io/crates/ptable"
 
 [dependencies]
 [build-dependencies]

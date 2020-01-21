@@ -1,3 +1,22 @@
+//! This is a complete periodic table for rust, including the following fields:
+//! * Atomic number
+//! * Symbol
+//! * Name
+//! * Atomic mass
+//! * CPK Color
+//! * Electron configuration
+//! * Electronegativity
+//! * AtomicRadius
+//! * Ionization energy
+//! * Electron affinity
+//! * Oxidation states
+//! * Standard state
+//! * Melting point
+//! * Boiling point
+//! * Density
+//! * Group block
+//! * Year discovered
+
 use std::mem;
 
 include!(concat!(env!("OUT_DIR"), "/data.rs"));
