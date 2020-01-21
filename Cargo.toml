@@ -1,0 +1,15 @@
+[package]
+name = "ptable"
+version = "0.1.0"
+authors = ["sandmor"]
+edition = "2018"
+build = "build.rs"
+description = "Complete periodic table, with melting point, density, atomic mass, electron configuration, oxidation states and more."
+categories = ["science"]
+keywords = ["periodic table", "chemistry", "chemical"]
+license = "MIT"
+
+[dependencies]
+[build-dependencies]
+json = "0"
+memchr = "2"
