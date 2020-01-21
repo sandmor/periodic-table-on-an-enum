@@ -6,7 +6,7 @@ edition = "2018"
 build = "build.rs"
 description = "Complete periodic table, with melting point, density, atomic mass, electron configuration, oxidation states and more."
 categories = ["science"]
-keywords = ["periodic table", "chemistry", "chemical"]
+keywords = ["periodic-table", "chemistry", "chemical"]
 license = "MIT"
 
 [dependencies]
