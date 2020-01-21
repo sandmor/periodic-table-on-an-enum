@@ -256,7 +256,7 @@ fn main() {
         else {
             out_file.write(b", ").unwrap();
         }
-        names.push((record.name.clone(), i));
+        names.push((record.name.clone().to_lowercase(), i));
         out_file.write(format!("\"{}\"", record.name).as_bytes()).unwrap();
     }
     out_file.write(b"];\n").unwrap();
