@@ -238,10 +238,10 @@ pub enum StateOfMatter {
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct ElectronicConfiguration {
-    s: [u8; 7],
-    p: [u8; 6],
-    d: [u8; 4],
-    f: [u8; 2]
+    pub s: [u8; 7],
+    pub p: [u8; 6],
+    pub d: [u8; 4],
+    pub f: [u8; 2]
 }
 
 #[cfg(test)]
