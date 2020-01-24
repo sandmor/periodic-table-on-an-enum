@@ -6,6 +6,8 @@ use std::env;
 use std::path::PathBuf;
 use std::io::{Read, Write};
 use std::u8;
+use std::mem;
+use std::collections::HashMap;
 
 use json::JsonValue;
 use memchr::memchr;
@@ -55,7 +57,96 @@ fn parse_dhex(i: &[u8]) -> u8 {
     res
 }
 
+#[derive(Copy, Clone)]
+pub struct ElectronicConfiguration {
+    s: [u8; 7],
+    p: [u8; 6],
+    d: [u8; 4],
+    f: [u8; 2]
+}
+
+#[derive(Clone)]
+enum EC {
+    Unparsed(String),
+    Parsed(ElectronicConfiguration)
+}
+
+fn parse_number(string: &[u8]) -> (usize, &[u8]) {
+    let mut digits = Vec::new();
+    let mut end = 0;
+    while string.len() > end && (string[end] >= b'0' && string[end] <= b'9') {
+        digits.push(string[end] - b'0');
+        end += 1;
+    }
+    let mut result = 0;
+    let mut m = 1;
+    for d in digits.into_iter().rev() {
+        result += d as usize * m;
+        m *= 10;
+    }
+    (result, &string[end..])
+}
+
+fn get_ec(symbol: &str, ec: &mut HashMap<String, EC>) -> ElectronicConfiguration {
+    match ec.get(symbol).unwrap().clone() {
+        EC::Unparsed(s) => {
+            eprintln!("{}", s);
+            let mut string = s.as_bytes();
+            let mut result;
+            if string[0] == b'[' {
+                string = &string[1..];
+                if string[1] == b']' {
+                    result = get_ec(unsafe { mem::transmute(&string[..1]) }, ec);
+                    string = &string[1..];
+                }
+                else {
+                    result = get_ec(unsafe { mem::transmute(&string[..2]) }, ec);
+                    string = &string[2..];
+                }
+                string = &string[1..];
+            }
+            else {
+                result = ElectronicConfiguration { s: [0; 7], p: [0; 6], d: [0; 4], f: [0; 2] };
+            }
+            while !string.is_empty() {
+                if string[0] == b' ' {
+                    string = &string[1..];
+                }
+                if string[0] == b'(' {
+                    // Message
+                    break;
+                }
+                let (index, s) = parse_number(string);
+                string = s;
+                let t = string[0];
+                string = &string[1..];
+                let (value, s) = parse_number(string);
+                string = s;
+                match t {
+                    b's' => {
+                        result.s[index-1] = value as u8;
+                    },
+                    b'p' => {
+                        result.p[index-2] = value as u8;
+                    },
+                    b'd' => {
+                        result.d[index-3] = value as u8;
+                    },
+                    b'f' => {
+                        result.f[index-4] = value as u8;
+                    },
+                    _ => unreachable!()
+                }
+            }
+            ec.insert(symbol.to_owned(), EC::Parsed(result));
+            result
+        },
+        EC::Parsed(c) => c
+    }
+}
+
 fn main() {
+    let mut ec = HashMap::new();
     let mut oxn = 0;
     let mut elements_path = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
     let mut out_file = PathBuf::from(env::var("OUT_DIR").unwrap());
@@ -210,6 +301,7 @@ fn main() {
                 _ => {}
             }
         }
+        ec.insert(record.symbol.clone(), EC::Unparsed(record.electron_configuration.to_owned()));
         data.push(record);
     }
     data.sort_unstable_by_key(|r| r.atomic_number);
@@ -324,6 +416,63 @@ fn main() {
             out_file.write(b", ").unwrap();
         }
         out_file.write(format!("\"{}\"", record.electron_configuration).as_bytes()).unwrap();
+    }
+    out_file.write(b"];\n").unwrap();
+    out_file.write(b"const ELECTRONIC_CONFIGURATION_PARSED: [ElectronicConfiguration; 118] = [").unwrap();
+    first = true;
+    for record in data.iter() {
+        if first {
+            first = false;
+        }
+        else {
+            out_file.write(b", ").unwrap();
+        }
+        let e = get_ec(&record.symbol, &mut ec);
+        out_file.write(format!("ElectronicConfiguration {} s: [", "{").as_bytes()).unwrap();
+        let mut inner_first = true;
+        for i in e.s.iter() {
+            if inner_first {
+                inner_first = false;
+            }
+            else {
+                out_file.write(b", ").unwrap();
+            }
+            out_file.write(&format!("{}", i).as_bytes()).unwrap();
+        }
+        out_file.write(b"], p: [").unwrap();
+        inner_first = true;
+        for i in e.p.iter() {
+            if inner_first {
+                inner_first = false;
+            }
+            else {
+                out_file.write(b", ").unwrap();
+            }
+            out_file.write(&format!("{}", i).as_bytes()).unwrap();
+        }
+        out_file.write(b"], d: [").unwrap();
+        inner_first = true;
+        for i in e.d.iter() {
+            if inner_first {
+                inner_first = false;
+            }
+            else {
+                out_file.write(b", ").unwrap();
+            }
+            out_file.write(&format!("{}", i).as_bytes()).unwrap();
+        }
+        out_file.write(b"], f: [").unwrap();
+        inner_first = true;
+        for i in e.f.iter() {
+            if inner_first {
+                inner_first = false;
+            }
+            else {
+                out_file.write(b", ").unwrap();
+            }
+            out_file.write(&format!("{}", i).as_bytes()).unwrap();
+        }
+        out_file.write(b"] }").unwrap();
     }
     out_file.write(b"];\n").unwrap();
     out_file.write(b"const ELECTRONEGATIVITIES: [f32; 118] = [").unwrap();

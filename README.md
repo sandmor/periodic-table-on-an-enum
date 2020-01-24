@@ -8,7 +8,7 @@ This is a complete periodic table for rust, including the following fields:
 * CPK Color
 * Electron configuration
 * Electronegativity
-* AtomicRadius
+* Atomic radius
 * Ionization energy
 * Electron affinity
 * Oxidation states

@@ -116,7 +116,18 @@ impl Element {
     }
 
     #[inline(always)]
+    #[deprecated]
     pub fn get_electron_configuration(&self) -> &'static str {
+        ELECTRON_CONFIGURATIONS[*self as usize]
+    }
+
+    #[inline(always)]
+    pub fn get_electronic_configuration(&self) -> ElectronicConfiguration {
+        ELECTRONIC_CONFIGURATION_PARSED[*self as usize]
+    }
+
+    #[inline(always)]
+    pub fn get_electronic_configuration_str(&self) -> &'static str {
         ELECTRON_CONFIGURATIONS[*self as usize]
     }
 
@@ -223,6 +234,14 @@ pub enum StateOfMatter {
     Solid,
     Liquid,
     Gas
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub struct ElectronicConfiguration {
+    s: [u8; 7],
+    p: [u8; 6],
+    d: [u8; 4],
+    f: [u8; 2]
 }
 
 #[cfg(test)]
