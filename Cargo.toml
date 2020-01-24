@@ -1,6 +1,6 @@
 [package]
 name = "ptable"
-version = "0.2.1"
+version = "0.3.1"
 authors = ["sandmor"]
 edition = "2018"
 build = "build.rs"
