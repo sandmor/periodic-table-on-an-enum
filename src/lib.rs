@@ -17,8 +17,8 @@
 //! * Group block
 //! * Year discovered
 
+use std::iter::{DoubleEndedIterator, ExactSizeIterator, FusedIterator, Iterator};
 use std::mem;
-use std::iter::{Iterator, FusedIterator, ExactSizeIterator, DoubleEndedIterator};
 
 include!(concat!(env!("OUT_DIR"), "/data.rs"));
 
@@ -59,8 +59,9 @@ macro_rules! lookup {
 
 impl Element {
     pub fn get_oxidation_states(&self) -> &'static [i8] {
-        &OXIDATION_STATES_DATA[OXIDATION_STATES[*self as usize].0 as usize..
-            OXIDATION_STATES[*self as usize].0 as usize+OXIDATION_STATES[*self as usize].1 as usize][..]
+        &OXIDATION_STATES_DATA[OXIDATION_STATES[*self as usize].0 as usize
+            ..OXIDATION_STATES[*self as usize].0 as usize
+                + OXIDATION_STATES[*self as usize].1 as usize][..]
     }
 
     /// The id is the atomic number starting at zero
@@ -72,7 +73,6 @@ impl Element {
     pub fn from_symbol(sym: &str) -> Option<Element> {
         lookup!(SYMBOLS_SORTED_ALPHABETICALLY, sym)
     }
-
 
     /// Name must be lowercase
     pub fn from_name(name: &str) -> Option<Element> {
@@ -87,7 +87,7 @@ impl Element {
         if z > 118 || z == 0 {
             return None;
         }
-        Some(unsafe { mem::transmute((z-1) as u8) })
+        Some(unsafe { mem::transmute((z - 1) as u8) })
     }
 
     #[inline(always)]
@@ -233,7 +233,7 @@ impl ExactSizeIterator for PeriodicTableIterator {
 pub enum StateOfMatter {
     Solid,
     Liquid,
-    Gas
+    Gas,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -241,5 +241,5 @@ pub struct ElectronicConfiguration {
     pub s: [u8; 7],
     pub p: [u8; 6],
     pub d: [u8; 4],
-    pub f: [u8; 2]
+    pub f: [u8; 2],
 }
