@@ -243,14 +243,3 @@ pub struct ElectronicConfiguration {
     pub d: [u8; 4],
     pub f: [u8; 2]
 }
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn smiles_parse() {
-        let mut r = crate::periodic_table();
-        r.next_back();
-        println!("{:?}", r.next());
-        assert_eq!(2 + 2, 4);
-    }
-}

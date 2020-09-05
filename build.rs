@@ -1,5 +1,4 @@
 extern crate json;
-extern crate memchr;
 
 use std::fs::File;
 use std::env;
@@ -10,7 +9,6 @@ use std::mem;
 use std::collections::HashMap;
 
 use json::JsonValue;
-use memchr::memchr;
 
 #[derive(Debug)]
 struct Record {
@@ -375,7 +373,7 @@ fn main() {
             out_file.write(b", ").unwrap();
         }
         out_file.write(record.atomic_mass.as_bytes()).unwrap();
-        if let None = memchr(b'.', record.atomic_mass.as_bytes()) {
+        if let None = record.atomic_mass.find('.') {
             out_file.write(b".").unwrap();
         }
     }
@@ -489,7 +487,7 @@ fn main() {
             continue;
         }
         out_file.write(record.electronegativity.as_bytes()).unwrap();
-        if let None = memchr(b'.', record.electronegativity.as_bytes()) {
+        if let None = record.electronegativity.find('.') {
             out_file.write(b".").unwrap();
         }
     }
@@ -524,7 +522,7 @@ fn main() {
             continue;
         }
         out_file.write(record.ionization_energy.as_bytes()).unwrap();
-        if let None = memchr(b'.', record.ionization_energy.as_bytes()) {
+        if let None = record.ionization_energy.find('.') {
             out_file.write(b".").unwrap();
         }
     }
@@ -543,7 +541,7 @@ fn main() {
             continue;
         }
         out_file.write(record.electron_affinity.as_bytes()).unwrap();
-        if let None = memchr(b'.', record.electron_affinity.as_bytes()) {
+        if let None = record.electron_affinity.find('.') {
             out_file.write(b".").unwrap();
         }
     }
@@ -610,7 +608,7 @@ fn main() {
             continue;
         }
         out_file.write(record.melting_point.as_bytes()).unwrap();
-        if let None = memchr(b'.', record.melting_point.as_bytes()) {
+        if let None = record.melting_point.find('.') {
             out_file.write(b".").unwrap();
         }
     }
@@ -629,7 +627,7 @@ fn main() {
             continue;
         }
         out_file.write(record.boiling_point.as_bytes()).unwrap();
-        if let None = memchr(b'.', record.boiling_point.as_bytes()) {
+        if let None = record.boiling_point.find('.') {
             out_file.write(b".").unwrap();
         }
     }
@@ -648,7 +646,7 @@ fn main() {
             continue;
         }
         out_file.write(record.density.as_bytes()).unwrap();
-        if let None = memchr(b'.', record.density.as_bytes()) {
+        if let None = record.density.find('.') {
             out_file.write(b".").unwrap();
         }
     }

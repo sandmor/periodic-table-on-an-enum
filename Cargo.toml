@@ -1,5 +1,5 @@
 [package]
-name = "ptable"
+name = "periodic-table-on-an-enum"
 version = "0.3.2"
 authors = ["sandmor"]
 edition = "2018"
@@ -9,11 +9,10 @@ categories = ["science"]
 keywords = ["periodic-table", "chemistry", "chemical"]
 license = "MIT"
 readme = "README.md"
-documentation = "https://docs.rs/ptable/"
-homepage = "https://crates.io/crates/ptable"
-repository = "https://github.com/sandmor/ptable"
+documentation = "https://docs.rs/periodic-table-on-an-enum/"
+homepage = "https://crates.io/crates/periodic-table-on-an-enum"
+repository = "https://github.com/sandmor/periodic-table-on-an-enum"
 
 [dependencies]
 [build-dependencies]
 json = "0"
-memchr = "2"

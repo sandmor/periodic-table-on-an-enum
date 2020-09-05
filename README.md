@@ -1,6 +1,6 @@
-# ptable
+# periodic-table-on-an-enum
 
-This is a complete periodic table for rust, including the following fields:
+This is a complete periodic table base on an enum containing all the elements and including the next fields:
 * Atomic number
 * Symbol
 * Name
@@ -21,8 +21,6 @@ This is a complete periodic table for rust, including the following fields:
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
-
-Please make sure to update tests as appropriate.
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
