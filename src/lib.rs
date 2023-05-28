@@ -64,9 +64,14 @@ impl Element {
                 + OXIDATION_STATES[*self as usize].1 as usize][..]
     }
 
-    /// The id is the atomic number starting at zero
+    /// The id is the atomic number starting at zero.
+    ///
+    /// # Safety
+    ///
+    /// It must hold that `0 <= id < 118`.
     #[inline(always)]
     pub unsafe fn from_id(id: u8) -> Element {
+        debug_assert!(id < 118);
         mem::transmute(id)
     }
 
@@ -87,7 +92,7 @@ impl Element {
         if z > 118 || z == 0 {
             return None;
         }
-        Some(unsafe { mem::transmute((z - 1) as u8) })
+        Some(unsafe { Element::from_id((z - 1) as u8) })
     }
 
     #[inline(always)]
@@ -96,7 +101,7 @@ impl Element {
     }
 
     #[inline(always)]
-    pub fn get_atomic_mass(&self) -> f32 {
+    pub fn get_atomic_mass(&self) -> f64 {
         ATOMIC_MASSES[*self as usize]
     }
 
