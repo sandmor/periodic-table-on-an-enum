@@ -4,7 +4,6 @@ use std::collections::HashMap;
 use std::env;
 use std::fs::File;
 use std::io::{Read, Write};
-use std::mem;
 use std::path::PathBuf;
 use std::u8;
 
@@ -90,10 +89,10 @@ fn get_ec(symbol: &str, ec: &mut HashMap<String, EC>) -> ElectronicConfiguration
             if string[0] == b'[' {
                 string = &string[1..];
                 if string[1] == b']' {
-                    result = get_ec(unsafe { mem::transmute(&string[..1]) }, ec);
+                    result = get_ec(std::str::from_utf8(&string[..1]).unwrap(), ec);
                     string = &string[1..];
                 } else {
-                    result = get_ec(unsafe { mem::transmute(&string[..2]) }, ec);
+                    result = get_ec(std::str::from_utf8(&string[..2]).unwrap(), ec);
                     string = &string[2..];
                 }
                 string = &string[1..];
@@ -277,7 +276,7 @@ fn main() {
                             '0' => {}
                             _ => continue,
                         }
-                        while let Some(c) = state.next() {
+                        for c in state {
                             if !c.is_ascii_digit() {
                                 break;
                             }
@@ -320,267 +319,276 @@ fn main() {
     }
     data.sort_unstable_by_key(|r| r.atomic_number);
     let mut out_file = File::create(out_file).unwrap();
-    out_file.write(b"#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]\n#[non_exhaustive]\npub enum Element {\n").unwrap();
+    out_file.write_all(b"#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]\n#[non_exhaustive]\npub enum Element {\n").unwrap();
     for record in data.iter() {
         out_file
-            .write(format!("    {},\n", record.name).as_bytes())
+            .write_all(format!("    {},\n", record.name).as_bytes())
             .unwrap();
     }
-    out_file.write(b"}\n").unwrap();
+    out_file.write_all(b"}\n").unwrap();
     let mut symbols = Vec::with_capacity(118);
-    out_file.write(b"const SYMBOLS: [&str; 118] = [").unwrap();
+    out_file
+        .write_all(b"const SYMBOLS: [&str; 118] = [")
+        .unwrap();
     let mut first = true;
     for (i, record) in data.iter().enumerate() {
         if first {
             first = false;
         } else {
-            out_file.write(b", ").unwrap();
+            out_file.write_all(b", ").unwrap();
         }
         symbols.push((record.symbol.clone(), i));
         out_file
-            .write(format!("\"{}\"", record.symbol).as_bytes())
+            .write_all(format!("\"{}\"", record.symbol).as_bytes())
             .unwrap();
     }
-    out_file.write(b"];\n").unwrap();
+    out_file.write_all(b"];\n").unwrap();
     symbols.sort_unstable_by(|a, b| a.0.cmp(&b.0));
     out_file
-        .write(b"const SYMBOLS_SORTED_ALPHABETICALLY: [(&str, u8); 118] = [")
+        .write_all(b"const SYMBOLS_SORTED_ALPHABETICALLY: [(&str, u8); 118] = [")
         .unwrap();
     let mut first = true;
     for symbol in symbols {
         if first {
             first = false;
         } else {
-            out_file.write(b", ").unwrap();
+            out_file.write_all(b", ").unwrap();
         }
         out_file
-            .write(format!("(\"{}\", {})", symbol.0, symbol.1).as_bytes())
+            .write_all(format!("(\"{}\", {})", symbol.0, symbol.1).as_bytes())
             .unwrap();
     }
-    out_file.write(b"];\n").unwrap();
+    out_file.write_all(b"];\n").unwrap();
     let mut names = Vec::with_capacity(118);
-    out_file.write(b"const NAMES: [&str; 118] = [").unwrap();
+    out_file.write_all(b"const NAMES: [&str; 118] = [").unwrap();
     first = true;
     for (i, record) in data.iter().enumerate() {
         if first {
             first = false;
         } else {
-            out_file.write(b", ").unwrap();
+            out_file.write_all(b", ").unwrap();
         }
         names.push((record.name.to_lowercase(), i));
         out_file
-            .write(format!("\"{}\"", record.name).as_bytes())
+            .write_all(format!("\"{}\"", record.name).as_bytes())
             .unwrap();
     }
-    out_file.write(b"];\n").unwrap();
+    out_file.write_all(b"];\n").unwrap();
     names.sort_unstable_by(|a, b| a.0.cmp(&b.0));
     out_file
-        .write(b"const LOWERCASE_NAMES_SORTED_ALPHABETICALLY: [(&str, u8); 118] = [")
+        .write_all(b"const LOWERCASE_NAMES_SORTED_ALPHABETICALLY: [(&str, u8); 118] = [")
         .unwrap();
     let mut first = true;
     for name in names {
         if first {
             first = false;
         } else {
-            out_file.write(b", ").unwrap();
+            out_file.write_all(b", ").unwrap();
         }
         out_file
-            .write(format!("(\"{}\", {})", name.0, name.1).as_bytes())
+            .write_all(format!("(\"{}\", {})", name.0, name.1).as_bytes())
             .unwrap();
     }
-    out_file.write(b"];\n").unwrap();
+    out_file.write_all(b"];\n").unwrap();
     out_file
-        .write(b"const ATOMIC_MASSES: [f32; 118] = [")
+        .write_all(b"const ATOMIC_MASSES: [f64; 118] = [")
         .unwrap();
     first = true;
     for record in data.iter() {
         if first {
             first = false;
         } else {
-            out_file.write(b", ").unwrap();
+            out_file.write_all(b", ").unwrap();
         }
-        out_file.write(record.atomic_mass.as_bytes()).unwrap();
-        if let None = record.atomic_mass.find('.') {
-            out_file.write(b".").unwrap();
+        out_file.write_all(record.atomic_mass.as_bytes()).unwrap();
+        if record.atomic_mass.find('.').is_none() {
+            out_file.write_all(b".").unwrap();
         }
     }
-    out_file.write(b"];\n").unwrap();
-    out_file.write(b"const CPK: [[u8; 3]; 118] = [").unwrap();
+    out_file.write_all(b"];\n").unwrap();
+    out_file
+        .write_all(b"const CPK: [[u8; 3]; 118] = [")
+        .unwrap();
     first = true;
     for record in data.iter() {
         if first {
             first = false;
         } else {
-            out_file.write(b", ").unwrap();
+            out_file.write_all(b", ").unwrap();
         }
         if record.cpk.is_empty() {
-            out_file.write(b"[0, 0, 0]").unwrap();
+            out_file.write_all(b"[0, 0, 0]").unwrap();
             continue;
         }
         let hex = record.cpk.as_bytes();
         let r = parse_dhex(&hex[0..]);
         let g = parse_dhex(&hex[2..]);
-        let b;
-        if hex.len() >= 6 {
-            b = parse_dhex(&hex[4..]);
+        let b = if hex.len() >= 6 {
+            parse_dhex(&hex[4..])
         } else {
-            b = 0;
-        }
+            0
+        };
         out_file
-            .write(format!("[{}, {}, {}]", r, g, b).as_bytes())
+            .write_all(format!("[{}, {}, {}]", r, g, b).as_bytes())
             .unwrap();
     }
-    out_file.write(b"];\n").unwrap();
+    out_file.write_all(b"];\n").unwrap();
     out_file
-        .write(b"const ELECTRON_CONFIGURATIONS: [&str; 118] = [")
+        .write_all(b"const ELECTRON_CONFIGURATIONS: [&str; 118] = [")
         .unwrap();
     first = true;
     for record in data.iter() {
         if first {
             first = false;
         } else {
-            out_file.write(b", ").unwrap();
+            out_file.write_all(b", ").unwrap();
         }
         out_file
-            .write(format!("\"{}\"", record.electron_configuration).as_bytes())
+            .write_all(format!("\"{}\"", record.electron_configuration).as_bytes())
             .unwrap();
     }
-    out_file.write(b"];\n").unwrap();
+    out_file.write_all(b"];\n").unwrap();
     out_file
-        .write(b"const ELECTRONIC_CONFIGURATION_PARSED: [ElectronicConfiguration; 118] = [")
+        .write_all(b"const ELECTRONIC_CONFIGURATION_PARSED: [ElectronicConfiguration; 118] = [")
         .unwrap();
     first = true;
     for record in data.iter() {
         if first {
             first = false;
         } else {
-            out_file.write(b", ").unwrap();
+            out_file.write_all(b", ").unwrap();
         }
         let e = get_ec(&record.symbol, &mut ec);
         out_file
-            .write(format!("ElectronicConfiguration {} s: [", "{").as_bytes())
+            .write_all(format!("ElectronicConfiguration {} s: [", "{").as_bytes())
             .unwrap();
         let mut inner_first = true;
         for i in e.s.iter() {
             if inner_first {
                 inner_first = false;
             } else {
-                out_file.write(b", ").unwrap();
+                out_file.write_all(b", ").unwrap();
             }
-            out_file.write(&format!("{}", i).as_bytes()).unwrap();
+            out_file.write_all(format!("{}", i).as_bytes()).unwrap();
         }
-        out_file.write(b"], p: [").unwrap();
+        out_file.write_all(b"], p: [").unwrap();
         inner_first = true;
         for i in e.p.iter() {
             if inner_first {
                 inner_first = false;
             } else {
-                out_file.write(b", ").unwrap();
+                out_file.write_all(b", ").unwrap();
             }
-            out_file.write(&format!("{}", i).as_bytes()).unwrap();
+            out_file.write_all(format!("{}", i).as_bytes()).unwrap();
         }
-        out_file.write(b"], d: [").unwrap();
+        out_file.write_all(b"], d: [").unwrap();
         inner_first = true;
         for i in e.d.iter() {
             if inner_first {
                 inner_first = false;
             } else {
-                out_file.write(b", ").unwrap();
+                out_file.write_all(b", ").unwrap();
             }
-            out_file.write(&format!("{}", i).as_bytes()).unwrap();
+            out_file.write_all(format!("{}", i).as_bytes()).unwrap();
         }
-        out_file.write(b"], f: [").unwrap();
+        out_file.write_all(b"], f: [").unwrap();
         inner_first = true;
         for i in e.f.iter() {
             if inner_first {
                 inner_first = false;
             } else {
-                out_file.write(b", ").unwrap();
+                out_file.write_all(b", ").unwrap();
             }
-            out_file.write(&format!("{}", i).as_bytes()).unwrap();
+            out_file.write_all(format!("{}", i).as_bytes()).unwrap();
         }
-        out_file.write(b"] }").unwrap();
+        out_file.write_all(b"] }").unwrap();
     }
-    out_file.write(b"];\n").unwrap();
+    out_file.write_all(b"];\n").unwrap();
     out_file
-        .write(b"const ELECTRONEGATIVITIES: [f32; 118] = [")
+        .write_all(b"const ELECTRONEGATIVITIES: [f32; 118] = [")
         .unwrap();
     first = true;
     for record in data.iter() {
         if first {
             first = false;
         } else {
-            out_file.write(b", ").unwrap();
+            out_file.write_all(b", ").unwrap();
         }
         if record.electronegativity.is_empty() {
-            out_file.write(b"0.").unwrap();
+            out_file.write_all(b"0.").unwrap();
             continue;
         }
-        out_file.write(record.electronegativity.as_bytes()).unwrap();
-        if let None = record.electronegativity.find('.') {
-            out_file.write(b".").unwrap();
+        out_file
+            .write_all(record.electronegativity.as_bytes())
+            .unwrap();
+        if record.electronegativity.find('.').is_none() {
+            out_file.write_all(b".").unwrap();
         }
     }
-    out_file.write(b"];\n").unwrap();
+    out_file.write_all(b"];\n").unwrap();
     out_file
-        .write(b"const ATOMIC_RADIUS: [u16; 118] = [")
+        .write_all(b"const ATOMIC_RADIUS: [u16; 118] = [")
         .unwrap();
     first = true;
     for record in data.iter() {
         if first {
             first = false;
         } else {
-            out_file.write(b", ").unwrap();
+            out_file.write_all(b", ").unwrap();
         }
         if record.atomic_radius.is_empty() {
-            out_file.write(b"0").unwrap();
+            out_file.write_all(b"0").unwrap();
             continue;
         }
-        out_file.write(record.atomic_radius.as_bytes()).unwrap();
+        out_file.write_all(record.atomic_radius.as_bytes()).unwrap();
     }
-    out_file.write(b"];\n").unwrap();
+    out_file.write_all(b"];\n").unwrap();
     out_file
-        .write(b"const IONIZATION_ENERGIES: [f32; 118] = [")
+        .write_all(b"const IONIZATION_ENERGIES: [f32; 118] = [")
         .unwrap();
     first = true;
     for record in data.iter() {
         if first {
             first = false;
         } else {
-            out_file.write(b", ").unwrap();
+            out_file.write_all(b", ").unwrap();
         }
         if record.ionization_energy.is_empty() {
-            out_file.write(b"0.").unwrap();
+            out_file.write_all(b"0.").unwrap();
             continue;
         }
-        out_file.write(record.ionization_energy.as_bytes()).unwrap();
-        if let None = record.ionization_energy.find('.') {
-            out_file.write(b".").unwrap();
+        out_file
+            .write_all(record.ionization_energy.as_bytes())
+            .unwrap();
+        if record.ionization_energy.find('.').is_none() {
+            out_file.write_all(b".").unwrap();
         }
     }
-    out_file.write(b"];\n").unwrap();
+    out_file.write_all(b"];\n").unwrap();
     out_file
-        .write(b"const ELECTRON_AFFINITIES: [f32; 118] = [")
+        .write_all(b"const ELECTRON_AFFINITIES: [f32; 118] = [")
         .unwrap();
     first = true;
     for record in data.iter() {
         if first {
             first = false;
         } else {
-            out_file.write(b", ").unwrap();
+            out_file.write_all(b", ").unwrap();
         }
         if record.electron_affinity.is_empty() {
-            out_file.write(b"0.").unwrap();
+            out_file.write_all(b"0.").unwrap();
             continue;
         }
-        out_file.write(record.electron_affinity.as_bytes()).unwrap();
-        if let None = record.electron_affinity.find('.') {
-            out_file.write(b".").unwrap();
+        out_file
+            .write_all(record.electron_affinity.as_bytes())
+            .unwrap();
+        if record.electron_affinity.find('.').is_none() {
+            out_file.write_all(b".").unwrap();
         }
     }
-    out_file.write(b"];\n").unwrap();
+    out_file.write_all(b"];\n").unwrap();
     out_file
-        .write(format!("const OXIDATION_STATES_DATA: [i8; {}] = [", oxn).as_bytes())
+        .write_all(format!("const OXIDATION_STATES_DATA: [i8; {}] = [", oxn).as_bytes())
         .unwrap();
     first = true;
     for record in data.iter() {
@@ -588,14 +596,14 @@ fn main() {
             if first {
                 first = false;
             } else {
-                out_file.write(b", ").unwrap();
+                out_file.write_all(b", ").unwrap();
             }
-            out_file.write(format!("{}", ox).as_bytes()).unwrap();
+            out_file.write_all(format!("{}", ox).as_bytes()).unwrap();
         }
     }
-    out_file.write(b"];\n").unwrap();
+    out_file.write_all(b"];\n").unwrap();
     out_file
-        .write(b"const OXIDATION_STATES: [(u8, u8); 118] = [")
+        .write_all(b"const OXIDATION_STATES: [(u8, u8); 118] = [")
         .unwrap();
     first = true;
     let mut oi = 0;
@@ -603,107 +611,109 @@ fn main() {
         if first {
             first = false;
         } else {
-            out_file.write(b", ").unwrap();
+            out_file.write_all(b", ").unwrap();
         }
         out_file
-            .write(format!("({}, {})", oi, record.oxidation_states.len()).as_bytes())
+            .write_all(format!("({}, {})", oi, record.oxidation_states.len()).as_bytes())
             .unwrap();
         oi += record.oxidation_states.len();
     }
-    out_file.write(b"];\n").unwrap();
+    out_file.write_all(b"];\n").unwrap();
     out_file
-        .write(b"const STANDARD_STATES: [StateOfMatter; 118] = [")
+        .write_all(b"const STANDARD_STATES: [StateOfMatter; 118] = [")
         .unwrap();
     first = true;
     for record in data.iter() {
         if first {
             first = false;
         } else {
-            out_file.write(b", ").unwrap();
+            out_file.write_all(b", ").unwrap();
         }
         out_file
-            .write(match &record.standard_state.to_lowercase()[..] {
+            .write_all(match &record.standard_state.to_lowercase()[..] {
                 "solid" => b"StateOfMatter::Solid",
                 "liquid" => b"StateOfMatter::Liquid",
                 "gas" => b"StateOfMatter::Gas",
                 "expected to be a solid" => b"StateOfMatter::Solid",
                 "expected to be a liquid" => b"StateOfMatter::Liquid",
                 "expected to be a gas" => b"StateOfMatter::Gas",
-                p @ _ => panic!("Unknown state: {}", p),
+                p => panic!("Unknown state: {}", p),
             })
             .unwrap();
     }
-    out_file.write(b"];\n").unwrap();
+    out_file.write_all(b"];\n").unwrap();
     out_file
-        .write(b"const MELTING_POINTS: [f32; 118] = [")
+        .write_all(b"const MELTING_POINTS: [f32; 118] = [")
         .unwrap();
     first = true;
     for record in data.iter() {
         if first {
             first = false;
         } else {
-            out_file.write(b", ").unwrap();
+            out_file.write_all(b", ").unwrap();
         }
         if record.melting_point.is_empty() {
-            out_file.write(b"0.").unwrap();
+            out_file.write_all(b"0.").unwrap();
             continue;
         }
-        out_file.write(record.melting_point.as_bytes()).unwrap();
-        if let None = record.melting_point.find('.') {
-            out_file.write(b".").unwrap();
+        out_file.write_all(record.melting_point.as_bytes()).unwrap();
+        if record.melting_point.find('.').is_none() {
+            out_file.write_all(b".").unwrap();
         }
     }
-    out_file.write(b"];\n").unwrap();
+    out_file.write_all(b"];\n").unwrap();
     out_file
-        .write(b"const BOILING_POINTS: [f32; 118] = [")
+        .write_all(b"const BOILING_POINTS: [f32; 118] = [")
         .unwrap();
     first = true;
     for record in data.iter() {
         if first {
             first = false;
         } else {
-            out_file.write(b", ").unwrap();
+            out_file.write_all(b", ").unwrap();
         }
         if record.boiling_point.is_empty() {
-            out_file.write(b"0.").unwrap();
+            out_file.write_all(b"0.").unwrap();
             continue;
         }
-        out_file.write(record.boiling_point.as_bytes()).unwrap();
-        if let None = record.boiling_point.find('.') {
-            out_file.write(b".").unwrap();
+        out_file.write_all(record.boiling_point.as_bytes()).unwrap();
+        if record.boiling_point.find('.').is_none() {
+            out_file.write_all(b".").unwrap();
         }
     }
-    out_file.write(b"];\n").unwrap();
-    out_file.write(b"const DENSITIES: [f32; 118] = [").unwrap();
-    first = true;
-    for record in data.iter() {
-        if first {
-            first = false;
-        } else {
-            out_file.write(b", ").unwrap();
-        }
-        if record.density.is_empty() {
-            out_file.write(b"0.").unwrap();
-            continue;
-        }
-        out_file.write(record.density.as_bytes()).unwrap();
-        if let None = record.density.find('.') {
-            out_file.write(b".").unwrap();
-        }
-    }
-    out_file.write(b"];\n").unwrap();
+    out_file.write_all(b"];\n").unwrap();
     out_file
-        .write(b"const GROUPS: [GroupBlock; 118] = [")
+        .write_all(b"const DENSITIES: [f32; 118] = [")
         .unwrap();
     first = true;
     for record in data.iter() {
         if first {
             first = false;
         } else {
-            out_file.write(b", ").unwrap();
+            out_file.write_all(b", ").unwrap();
+        }
+        if record.density.is_empty() {
+            out_file.write_all(b"0.").unwrap();
+            continue;
+        }
+        out_file.write_all(record.density.as_bytes()).unwrap();
+        if record.density.find('.').is_none() {
+            out_file.write_all(b".").unwrap();
+        }
+    }
+    out_file.write_all(b"];\n").unwrap();
+    out_file
+        .write_all(b"const GROUPS: [GroupBlock; 118] = [")
+        .unwrap();
+    first = true;
+    for record in data.iter() {
+        if first {
+            first = false;
+        } else {
+            out_file.write_all(b", ").unwrap();
         }
         out_file
-            .write(match &record.group_block.to_lowercase()[..] {
+            .write_all(match &record.group_block.to_lowercase()[..] {
                 "halogen" => b"GroupBlock::Halogen",
                 "noble gas" => b"GroupBlock::NobleGas",
                 "transition metal" => b"GroupBlock::TransitionMetal",
@@ -714,26 +724,28 @@ fn main() {
                 "nonmetal" => b"GroupBlock::NonMetal",
                 "actinide" => b"GroupBlock::Actinide",
                 "lanthanide" => b"GroupBlock::Lanthanide",
-                p @ _ => panic!("Unknown group block: {}", p),
+                p => panic!("Unknown group block: {}", p),
             })
             .unwrap();
     }
-    out_file.write(b"];\n").unwrap();
+    out_file.write_all(b"];\n").unwrap();
     out_file
-        .write(b"const YEARS_OF_DISCOVERED: [u16; 118] = [")
+        .write_all(b"const YEARS_OF_DISCOVERED: [u16; 118] = [")
         .unwrap();
     first = true;
     for record in data.iter() {
         if first {
             first = false;
         } else {
-            out_file.write(b", ").unwrap();
+            out_file.write_all(b", ").unwrap();
         }
         if record.year_discovered.is_empty() || record.year_discovered == "Ancient" {
-            out_file.write(b"0").unwrap();
+            out_file.write_all(b"0").unwrap();
             continue;
         }
-        out_file.write(record.year_discovered.as_bytes()).unwrap();
+        out_file
+            .write_all(record.year_discovered.as_bytes())
+            .unwrap();
     }
-    out_file.write(b"];\n").unwrap();
+    out_file.write_all(b"];\n").unwrap();
 }
